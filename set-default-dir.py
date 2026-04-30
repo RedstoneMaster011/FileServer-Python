@@ -31,18 +31,18 @@ def main():
             os.makedirs(directory, exist_ok=True)
             print(f"  📁 Created: {directory}")
         else:
-            print("❌  Aborted.")
+            print("   Aborted.")
             sys.exit(1)
 
     if not os.path.isdir(directory):
-        print(f"❌  '{directory}' is not a directory.")
+        print(f"   '{directory}' is not a directory.")
         sys.exit(1)
 
     if len(sys.argv) >= 3:
         try:
             port = int(sys.argv[2])
         except ValueError:
-            print("❌  Port must be a number.")
+            print("   Port must be a number.")
             sys.exit(1)
     else:
         cfg = load_config()
@@ -60,7 +60,7 @@ def main():
     print(f"    Root : {directory}")
     print(f"    Port : {port}")
     print()
-    print("  → Run the server with just:  python main.py")
+    print("    Run the server with just:  python main.py")
     print()
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ def main():
         name = input("Enter new app name: ").strip()
 
     if not name:
-        print("❌  Name cannot be empty.")
+        print("   Name cannot be empty.")
         sys.exit(1)
 
     save_name(name)

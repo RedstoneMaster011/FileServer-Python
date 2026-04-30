@@ -42,11 +42,11 @@ def main():
         username = input("Enter username: ").strip()
 
     if not username:
-        print("❌  Username cannot be empty.")
+        print("   Username cannot be empty.")
         sys.exit(1)
 
     if any(c in username for c in ' /\\:*?"<>|'):
-        print("❌  Username contains invalid characters.")
+        print("   Username contains invalid characters.")
         sys.exit(1)
 
     create_user(username)
