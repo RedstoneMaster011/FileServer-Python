@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ subpath.split('/')[-1] }} — {{ app_name }}{% endblock %}
+
+{% block extra_style %}
+.editor-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px - 4rem);
+  min-height: 400px;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.editor-filepath {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text3);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-actions { display: flex; gap: 0.5rem; }
+
+.code-editor {
+  flex: 1;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  padding: 1rem 1.25rem;
+  resize: none;
+  tab-size: 4;
+  transition: border-color 0.15s;
+}
+
+.code-editor:focus { border-color: var(--accent); }
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+{% endblock %}
+
+{% block content %}
+<form method="post" style="display:contents">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="editor-wrap">
+    <div class="editor-header">
+      <a href="/browse/{{ subpath.rsplit('/',1)[0] if '/' in subpath else '' }}" class="btn btn-ghost">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="12" y1="6.5" x2="1" y2="6.5"/>
+          <polyline points="5,3 1,6.5 5,10"/>
+        </svg>
+        Back
+      </a>
+      <div class="editor-filepath">{{ subpath }}</div>
+      <div class="editor-actions">
+        <a href="/browse/{{ subpath.rsplit('/',1)[0] if '/' in subpath else '' }}" class="btn btn-ghost">Discard</a>
+        <button type="submit" class="btn btn-primary">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M1 1h7l3 3v7H1V1z"/>
+            <rect x="3.5" y="6" width="5" height="4" rx="0.5"/>
+            <rect x="3.5" y="1" width="4" height="2.5" rx="0.5"/>
+          </svg>
+          Save
+        </button>
+      </div>
+    </div>
+
+    <textarea class="code-editor" name="content" spellcheck="false" id="editor">{{ content }}</textarea>
+
+    <div class="editor-footer">
+      <span id="cursor-pos">Ln 1, Col 1</span>
+      <span>Tab = 4 spaces &nbsp;·&nbsp; Ctrl+S to save</span>
+    </div>
+  </div>
+</form>
+
+<script>
+  const ed = document.getElementById('editor');
+
+  ed.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = this.selectionStart;
+      this.value = this.value.substring(0, s) + '    ' + this.value.substring(this.selectionEnd);
+      this.selectionStart = this.selectionEnd = s + 4;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      this.closest('form').submit();
+    }
+  });
+
+  ed.addEventListener('keyup', updateCursor);
+  ed.addEventListener('click', updateCursor);
+
+  function updateCursor() {
+    const text = ed.value.substring(0, ed.selectionStart);
+    const lines = text.split('\n');
+    document.getElementById('cursor-pos').textContent =
+      `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+  }
+</script>
+{% endblock %}
