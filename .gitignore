@@ -1,2 +1,6 @@
 /RUN.sh
 /.idea/
+/log.txt
+/users.json
+/config.json
+/name.json
