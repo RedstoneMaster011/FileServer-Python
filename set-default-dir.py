@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import tempfile
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
 
@@ -11,8 +12,30 @@ def load_config():
         return json.load(f)
 
 def save_config(cfg):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(cfg, f, indent=2)
+    directory = os.path.dirname(CONFIG_FILE)
+    fd, temporary = tempfile.mkstemp(prefix=".tmp-config-", dir=directory, text=True)
+    try:
+        os.chmod(temporary, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2)
+            f.write("\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, CONFIG_FILE)
+        try:
+            os.chmod(CONFIG_FILE, 0o600)
+        except OSError:
+            pass
+    except Exception:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
 
 def main():
     if len(sys.argv) >= 2:
@@ -38,6 +61,12 @@ def main():
         print(f"   '{directory}' is not a directory.")
         sys.exit(1)
 
+    project_dir = os.path.realpath(os.path.dirname(__file__))
+    if os.path.commonpath([directory, project_dir]) == directory:
+        print("   The storage root cannot contain the file-server application.")
+        print("   Choose a dedicated data folder, such as this project's 'files' folder.")
+        sys.exit(1)
+
     if len(sys.argv) >= 3:
         try:
             port = int(sys.argv[2])
@@ -50,9 +79,15 @@ def main():
         raw = input(f"Enter port [{current_port}]: ").strip()
         port = int(raw) if raw else current_port
 
+    if not 1 <= port <= 65535:
+        print("   Port must be between 1 and 65535.")
+        sys.exit(1)
+
     cfg = load_config()
     cfg["root_dir"] = directory
     cfg["port"] = port
+    cfg.setdefault("bind_host", "0.0.0.0")
+    cfg.setdefault("max_upload_bytes", 20 * 1024 * 1024 * 1024)
     save_config(cfg)
 
     print()

@@ -5,7 +5,7 @@ import subprocess
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def run(script):
-    subprocess.run([sys.executable, os.path.join(BASE_DIR, script)], check=False)
+    subprocess.run([sys.executable, os.path.join(BASE_DIR, script)], check=True)
 
 def main():
     print()

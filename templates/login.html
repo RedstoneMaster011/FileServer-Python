@@ -99,7 +99,6 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
     <p>Sign in to access your files.</p>
 
     <form method="post">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field">
         <label>Username</label>
         <input name="username" type="text" placeholder="Username" autocomplete="username" autofocus required>
@@ -112,6 +111,6 @@ body { display: flex; align-items: center; justify-content: center; min-height: 
     </form>
   </div>
 
-  <div class="auth-hint">eeeeeeeeeeeeeeee</div>
+  <div class="auth-hint">Private files, securely within reach.</div>
 </div>
 {% endblock %}

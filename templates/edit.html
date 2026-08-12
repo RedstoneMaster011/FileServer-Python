@@ -62,7 +62,7 @@
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="editor-wrap">
     <div class="editor-header">
-      <a href="/browse/{{ subpath.rsplit('/',1)[0] if '/' in subpath else '' }}" class="btn btn-ghost">
+      <a href="{{ url_for('browse', subpath=subpath.rsplit('/',1)[0] if '/' in subpath else '') }}" class="btn btn-ghost">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
           <line x1="12" y1="6.5" x2="1" y2="6.5"/>
           <polyline points="5,3 1,6.5 5,10"/>
@@ -71,7 +71,7 @@
       </a>
       <div class="editor-filepath">{{ subpath }}</div>
       <div class="editor-actions">
-        <a href="/browse/{{ subpath.rsplit('/',1)[0] if '/' in subpath else '' }}" class="btn btn-ghost">Discard</a>
+        <a href="{{ url_for('browse', subpath=subpath.rsplit('/',1)[0] if '/' in subpath else '') }}" class="btn btn-ghost">Discard</a>
         <button type="submit" class="btn btn-primary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M1 1h7l3 3v7H1V1z"/>
@@ -92,7 +92,7 @@
   </div>
 </form>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   const ed = document.getElementById('editor');
 
   ed.addEventListener('keydown', function(e) {

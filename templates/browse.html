@@ -240,10 +240,10 @@
 
 {% if breadcrumbs %}
 <nav class="breadcrumbs">
-  <a href="/browse" data-crumb-path="">Home</a>
+  <a href="{{ url_for('browse') }}" data-crumb-path="">Home</a>
   {% for crumb in breadcrumbs %}
     <span class="sep">/</span>
-    <a href="/browse/{{ crumb.path }}" data-crumb-path="{{ crumb.path }}">{{ crumb.name }}</a>
+    <a href="{{ url_for('browse', subpath=crumb.path) }}" data-crumb-path="{{ crumb.path }}">{{ crumb.name }}</a>
   {% endfor %}
 </nav>
 {% endif %}
@@ -252,15 +252,16 @@
   <h1 class="page-title">
     {% if subpath %}{{ subpath.split('/')[-1] }}{% else %}My Files{% endif %}
   </h1>
+  {% if can_upload %}
   <div class="toolbar-actions">
-    <button class="btn btn-ghost" onclick="openModal('mkdir-modal')">
+    <button class="btn btn-ghost" data-open-modal="mkdir-modal">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
         <rect x="1" y="3" width="10" height="8" rx="1"/>
         <path d="M1 5h10M4 3V1.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V3"/>
       </svg>
       New folder
     </button>
-    <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
+    <button class="btn btn-primary" data-trigger-upload>
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="6" y1="8" x2="6" y2="1"/>
         <polyline points="3,4 6,1 9,4"/>
@@ -269,15 +270,18 @@
       Upload
     </button>
   </div>
+  {% endif %}
 </div>
 
-<form id="upload-form" action="/upload/{{ subpath }}" method="post" enctype="multipart/form-data">
+{% if can_upload %}
+<form id="upload-form" action="{{ url_for('upload', subpath=subpath) }}" method="post" enctype="multipart/form-data">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="dropzone" id="dropzone">
     <input type="file" name="files" id="upload-input" multiple>
     Drop files here or click <strong>Upload</strong>
   </div>
 </form>
+{% endif %}
 
 {% if entries %}
 <table class="file-table">
@@ -291,8 +295,8 @@
   </thead>
   <tbody>
   {% for e in entries %}
-    <tr draggable="true"
-        data-href="{{ '/browse/' + e.path if e.is_dir else '#' }}"
+    <tr draggable="{{ 'true' if can_edit else 'false' }}"
+        data-href="{{ url_for('browse', subpath=e.path) if e.is_dir else '#' }}"
         data-path="{{ e.path | e }}"
         data-name="{{ e.name | e }}"
         data-is-dir="{{ '1' if e.is_dir else '0' }}">
@@ -309,9 +313,9 @@
             {% else %}📎{% endif %}
           </div>
           {% if e.is_dir %}
-            <a href="/browse/{{ e.path }}">{{ e.name }}</a>
+            <a href="{{ url_for('browse', subpath=e.path) }}">{{ e.name }}</a>
           {% else %}
-            <a href="#" onclick="openPreview('{{ e.path | e }}', '{{ e.name | e }}'); return false;">{{ e.name }}</a>
+            <a href="{{ url_for('view_file', subpath=e.path) }}" data-preview-path="{{ e.path }}" data-preview-name="{{ e.name }}">{{ e.name }}</a>
           {% endif %}
         </div>
       </td>
@@ -326,36 +330,46 @@
       <td class="col-actions">
         <div class="row-actions">
           {% if not e.is_dir %}
-            <a href="/download/{{ e.path }}" class="btn btn-ghost btn-icon" title="Download">
+            <a href="{{ url_for('download_file', subpath=e.path) }}" class="btn btn-ghost btn-icon" title="Download">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
                 <line x1="6.5" y1="1" x2="6.5" y2="9"/>
                 <polyline points="3,6 6.5,9.5 10,6"/>
                 <line x1="1" y1="12" x2="12" y2="12"/>
               </svg>
             </a>
-            {% if e.category == 'text' %}
-            <a href="/edit/{{ e.path }}" class="btn btn-ghost btn-icon" title="Edit">
+            {% if can_edit and e.category == 'text' %}
+            <a href="{{ url_for('edit_file', subpath=e.path) }}" class="btn btn-ghost btn-icon" title="Edit">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M9.5 1.5L11.5 3.5L4.5 10.5L1.5 11.5L2.5 8.5Z"/>
               </svg>
             </a>
             {% endif %}
-            <button class="btn btn-ghost btn-icon" data-action="convert" data-path="{{ e.path | e }}" title="Change extension">
+            {% if can_edit %}
+            <button class="btn btn-ghost btn-icon" data-action="convert" data-path="{{ e.path }}" title="Change extension">
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
                 <polyline points="9,1 13,1 13,5"/>
                 <polyline points="4,12 1,12 1,8"/>
                 <path d="M13 1L7 7M1 12l6-6"/>
               </svg>
             </button>
+            {% endif %}
           {% endif %}
-          <button class="btn btn-ghost btn-icon" data-action="rename" data-path="{{ e.path | e }}" data-name="{{ e.name | e }}" title="Rename">
+          {% if can_edit %}
+          <button class="btn btn-ghost btn-icon" data-action="move" data-path="{{ e.path }}" title="Move">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M1 3.5h4l1.2 1.4H12v6.6H1z"/><path d="M6.5 7v3M4.8 8.7 6.5 7l1.7 1.7"/>
+            </svg>
+          </button>
+          <button class="btn btn-ghost btn-icon" data-action="rename" data-path="{{ e.path }}" data-name="{{ e.name }}" title="Rename">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M1 10h3l7-7-3-3-7 7v3z"/>
             </svg>
           </button>
-          <form action="/delete/{{ e.path }}" method="post" style="display:inline" onsubmit="return false" onclick="e.stopPropagation()" data-delete-form>
+          {% endif %}
+          {% if can_delete %}
+          <form action="{{ url_for('delete', subpath=e.path) }}" method="post" style="display:inline" data-delete-form>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="btn btn-danger btn-icon" type="button" title="Delete" onclick="openDeleteConfirm(this, '{{ e.name | e }}')">
+            <button class="btn btn-danger btn-icon" type="button" title="Delete" data-delete-name="{{ e.name }}">
               <svg width="12" height="13" viewBox="0 0 12 13" fill="none" stroke="currentColor" stroke-width="1.8">
                 <line x1="1" y1="3" x2="11" y2="3"/>
                 <path d="M4 3V2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1"/>
@@ -363,6 +377,7 @@
               </svg>
             </button>
           </form>
+          {% endif %}
         </div>
       </td>
     </tr>
@@ -376,23 +391,26 @@
   </div>
 {% endif %}
 
+{% if can_upload %}
 <div class="modal-backdrop" id="mkdir-modal">
   <div class="modal">
     <h3>New folder</h3>
-    <form action="/mkdir/{{ subpath }}" method="post">
+    <form action="{{ url_for('mkdir', subpath=subpath) }}" method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field">
         <label>Folder name</label>
         <input name="name" type="text" placeholder="Folder" required autofocus>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" onclick="closeModal('mkdir-modal')">Cancel</button>
+        <button type="button" class="btn btn-ghost" data-close-modal="mkdir-modal">Cancel</button>
         <button type="submit" class="btn btn-primary">Create</button>
       </div>
     </form>
   </div>
 </div>
+{% endif %}
 
+{% if can_edit %}
 <div class="modal-backdrop" id="rename-modal">
   <div class="modal">
     <h3>Rename</h3>
@@ -403,7 +421,7 @@
         <input id="rename-input" name="new_name" type="text" required>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" onclick="closeModal('rename-modal')">Cancel</button>
+        <button type="button" class="btn btn-ghost" data-close-modal="rename-modal">Cancel</button>
         <button type="submit" class="btn btn-primary">Rename</button>
       </div>
     </form>
@@ -421,7 +439,7 @@
       </div>
       <p style="font-size:0.78rem;color:var(--text3);margin-bottom:0.75rem;">A copy will be created with the new extension.</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" onclick="closeModal('convert-modal')">Cancel</button>
+        <button type="button" class="btn btn-ghost" data-close-modal="convert-modal">Cancel</button>
         <button type="submit" class="btn btn-primary">Convert</button>
       </div>
     </form>
@@ -448,25 +466,28 @@
         Destination: <span id="move-dest-label" style="color:var(--text2);font-family:var(--mono);">/</span>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" onclick="closeModal('move-modal')">Cancel</button>
+        <button type="button" class="btn btn-ghost" data-close-modal="move-modal">Cancel</button>
         <button type="submit" class="btn btn-primary">Move</button>
       </div>
     </form>
   </div>
 </div>
+{% endif %}
 
+{% if can_delete %}
 <div class="modal-backdrop" id="delete-modal">
   <div class="modal">
     <h3>Delete file</h3>
     <p id="delete-modal-msg" style="font-size:0.85rem;color:var(--text2);margin-bottom:1.25rem;"></p>
     <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" onclick="closeModal('delete-modal')">Cancel</button>
+      <button type="button" class="btn btn-ghost" data-close-modal="delete-modal">Cancel</button>
       <button type="button" class="btn btn-danger" id="delete-confirm-btn" style="border-color:var(--red);color:var(--red);">Delete</button>
     </div>
   </div>
 </div>
+{% endif %}
 
-<script>
+<script nonce="{{ csp_nonce }}">
   // Row click — navigate into folder or open file preview
   document.querySelectorAll('.file-table tbody tr[data-href]').forEach(row => {
     row.addEventListener('click', e => {
@@ -492,7 +513,7 @@
     return g;
   };
 
-  document.querySelectorAll('.file-table tbody tr[draggable]').forEach(row => {
+  document.querySelectorAll('.file-table tbody tr[draggable="true"]').forEach(row => {
 
     row.addEventListener('dragstart', e => {
       dragSrc = row;
@@ -585,10 +606,10 @@
   function submitMove(srcPath, destDir) {
     const form = document.createElement('form');
     form.method = 'post';
-    form.action = '/move/' + srcPath;
+    form.action = '/move/' + encodedPath(srcPath);
     form.style.display = 'none';
     const csrf = document.createElement('input');
-    csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = '{{ csrf_token() }}';
+    csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = {{ csrf_token() | tojson }};
     const dest = document.createElement('input');
     dest.type = 'hidden'; dest.name = 'dest_dir'; dest.value = destDir;
     form.appendChild(csrf); form.appendChild(dest);
@@ -614,17 +635,17 @@
       const name   = btn.dataset.name || '';
 
       if (action === 'rename') {
-        document.getElementById('rename-form').action = '/rename/' + path;
+        document.getElementById('rename-form').action = '/rename/' + encodedPath(path);
         document.getElementById('rename-input').value = name;
         openModal('rename-modal');
         setTimeout(() => document.getElementById('rename-input').select(), 50);
       } else if (action === 'convert') {
-        document.getElementById('convert-form').action = '/convert/' + path;
+        document.getElementById('convert-form').action = '/convert/' + encodedPath(path);
         document.getElementById('convert-input').value = '';
         openModal('convert-modal');
         setTimeout(() => document.getElementById('convert-input').focus(), 50);
       } else if (action === 'move') {
-        document.getElementById('move-form').action = '/move/' + path;
+        document.getElementById('move-form').action = '/move/' + encodedPath(path);
         document.getElementById('move-input').value = '';
         document.getElementById('move-dest-label').textContent = '/';
         document.querySelectorAll('.folder-picker-item').forEach(i => i.classList.remove('selected'));
@@ -648,6 +669,13 @@
     openModal('delete-modal');
   }
 
+  document.querySelectorAll('[data-delete-name]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      openDeleteConfirm(button, button.dataset.deleteName || 'this item');
+    });
+  });
+
   function doUpload(files) {
     const form = document.getElementById('upload-form');
     const fd = new FormData();
@@ -666,7 +694,7 @@
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action);
-    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token() }}');
+    xhr.setRequestHeader('X-CSRFToken', {{ csrf_token() | tojson }});
 
     xhr.upload.addEventListener('progress', e => {
       if (e.lengthComputable) {
@@ -694,9 +722,12 @@
     xhr.send(fd);
   }
 
-  document.getElementById('upload-input').addEventListener('change', function() {
-    if (this.files.length) doUpload(this.files);
-  });
+  const uploadInput = document.getElementById('upload-input');
+  if (uploadInput) {
+    uploadInput.addEventListener('change', function() {
+      if (this.files.length) doUpload(this.files);
+    });
+  }
 
   const dz = document.getElementById('dropzone');
   if (dz) {

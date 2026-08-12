@@ -4,41 +4,66 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
+  <style nonce="{{ csp_nonce }}">
     :root {
-      --bg: #0a0a0c;
-      --surface: #111114;
-      --surface2: #18181d;
-      --surface3: #202028;
-      --border: #26262e;
-      --border2: #32323c;
-      --accent: #7c6af7;
-      --accent-dim: #7c6af720;
-      --accent-glow: #7c6af740;
+      --bg: #090615;
+      --surface: rgba(25, 17, 48, 0.62);
+      --surface2: rgba(46, 31, 82, 0.42);
+      --surface3: rgba(78, 52, 130, 0.38);
+      --border: rgba(213, 190, 255, 0.14);
+      --border2: rgba(220, 200, 255, 0.25);
+      --accent: #a78bfa;
+      --accent-dim: rgba(167, 139, 250, 0.15);
+      --accent-glow: rgba(167, 139, 250, 0.36);
       --green: #4ade80;
       --red: #f87171;
       --amber: #fbbf24;
       --text: #e8e8f0;
-      --text2: #9898a8;
-      --text3: #55555f;
+      --text2: #b8b0c9;
+      --text3: #7f7692;
       --radius: 8px;
       --radius-lg: 14px;
-      --mono: 'DM Mono', monospace;
-      --sans: 'Instrument Sans', sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(126, 78, 230, 0.27), transparent 34rem),
+        radial-gradient(circle at 88% 18%, rgba(213, 110, 255, 0.17), transparent 30rem),
+        radial-gradient(circle at 52% 92%, rgba(81, 42, 174, 0.24), transparent 36rem),
+        linear-gradient(145deg, #080512 0%, #100823 52%, #090613 100%);
       color: var(--text);
       font-family: var(--sans);
       min-height: 100vh;
       font-size: 15px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 28rem;
+      height: 28rem;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.32;
+      animation: float-orb 18s ease-in-out infinite alternate;
+    }
+
+    body::before { background: #7c3aed; top: -12rem; left: -8rem; }
+    body::after { background: #c084fc; right: -12rem; bottom: -14rem; animation-delay: -7s; }
+
+    @keyframes float-orb {
+      to { transform: translate3d(3rem, 2rem, 0) scale(1.12); }
     }
 
     a { color: inherit; text-decoration: none; }
@@ -59,8 +84,11 @@
       gap: 1rem;
       padding: 0 1.5rem;
       height: 56px;
-      background: var(--surface);
+      background: rgba(17, 10, 35, 0.62);
       border-bottom: 1px solid var(--border);
+      box-shadow: 0 12px 40px rgba(4, 1, 12, 0.22), inset 0 1px rgba(255,255,255,0.05);
+      backdrop-filter: blur(24px) saturate(155%);
+      -webkit-backdrop-filter: blur(24px) saturate(155%);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -138,6 +166,19 @@
       gap: 0.4rem;
     }
 
+    .role-badge {
+      padding: 0.18rem 0.48rem;
+      border: 1px solid rgba(196, 166, 255, 0.24);
+      border-radius: 999px;
+      background: rgba(151, 103, 255, 0.12);
+      color: #c9b6ff;
+      font: 600 0.63rem/1 var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .logout-form { display: inline-flex; }
+
     .avatar {
       width: 26px;
       height: 26px;
@@ -166,6 +207,8 @@
       transition: all 0.15s;
       white-space: nowrap;
       line-height: 1;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
 
     .btn-ghost {
@@ -181,12 +224,12 @@
     }
 
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, #8b5cf6, #b36cf5);
       color: #fff;
       border-color: var(--accent);
     }
 
-    .btn-primary:hover { filter: brightness(1.15); }
+    .btn-primary:hover { filter: brightness(1.12); box-shadow: 0 8px 24px rgba(139,92,246,0.3); }
 
     .btn-danger {
       background: none;
@@ -211,6 +254,8 @@
       max-width: 1040px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     .flash-list { list-style: none; margin-bottom: 1.2rem; }
@@ -261,8 +306,8 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(5, 2, 14, 0.62);
+      backdrop-filter: blur(14px);
       z-index: 300;
       align-items: center;
       justify-content: center;
@@ -272,13 +317,27 @@
     .modal-backdrop.open { display: flex; }
 
     .modal {
-      background: var(--surface);
+      background: linear-gradient(145deg, rgba(49, 31, 86, 0.82), rgba(19, 12, 39, 0.76));
       border: 1px solid var(--border2);
       border-radius: var(--radius-lg);
       padding: 1.75rem;
       width: 100%;
       max-width: 400px;
       animation: modal-in 0.15s ease;
+      box-shadow: 0 28px 90px rgba(3, 1, 12, 0.58), inset 0 1px rgba(255,255,255,0.1);
+      backdrop-filter: blur(30px) saturate(170%);
+      -webkit-backdrop-filter: blur(30px) saturate(170%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.42), transparent);
+      pointer-events: none;
     }
 
     @keyframes modal-in {
@@ -304,7 +363,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(8, 3, 22, 0.48);
       backdrop-filter: blur(20px) saturate(0.8);
       -webkit-backdrop-filter: blur(20px) saturate(0.8);
       z-index: 400;
@@ -319,7 +378,7 @@
       gap: 0.75rem;
       padding: 0 1.25rem;
       height: 52px;
-      background: var(--surface);
+      background: rgba(20, 12, 41, 0.72);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
@@ -369,7 +428,7 @@
       font-size: 0.82rem;
       line-height: 1.7;
       color: var(--text);
-      background: var(--surface);
+      background: linear-gradient(145deg, rgba(44, 28, 77, 0.9), rgba(17, 10, 34, 0.84));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.5rem;
@@ -399,6 +458,8 @@
       padding: 0.85rem 1rem;
       z-index: 500;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
       display: none;
       flex-direction: column;
       gap: 0.5rem;
@@ -459,6 +520,46 @@
     }
 
     {% block extra_style %}{% endblock %}
+
+    /* Shared liquid-glass finish, applied after page-specific styles. */
+    .file-table,
+    .auth-card,
+    .code-editor,
+    .search-header,
+    .empty-state {
+      background: linear-gradient(145deg, rgba(49, 31, 84, 0.54), rgba(17, 10, 35, 0.58));
+      border-color: rgba(216, 194, 255, 0.18);
+      box-shadow: 0 24px 70px rgba(4, 1, 15, 0.28), inset 0 1px rgba(255,255,255,0.07);
+      backdrop-filter: blur(24px) saturate(155%);
+      -webkit-backdrop-filter: blur(24px) saturate(155%);
+    }
+
+    .file-table { border-radius: 16px; overflow: hidden; }
+    .file-table tbody tr:hover,
+    .result-item:hover { background: rgba(139, 92, 246, 0.12); }
+
+    .dropzone {
+      background: rgba(58, 36, 100, 0.24);
+      border-color: rgba(192, 160, 255, 0.26);
+      box-shadow: inset 0 1px rgba(255,255,255,0.05);
+      backdrop-filter: blur(18px);
+    }
+
+    .dropzone:hover,
+    .dropzone.drag-over {
+      background: rgba(111, 67, 190, 0.24);
+      border-color: rgba(187, 151, 255, 0.62);
+      box-shadow: 0 14px 42px rgba(75, 34, 150, 0.2), inset 0 1px rgba(255,255,255,0.1);
+    }
+
+    .field input,
+    .field textarea,
+    .field select,
+    .search-bar {
+      background: rgba(12, 7, 27, 0.48);
+      border-color: rgba(216, 194, 255, 0.18);
+      backdrop-filter: blur(14px);
+    }
   </style>
 </head>
 <body>
@@ -491,8 +592,12 @@
     <div class="nav-user">
       <div class="avatar">{{ session.username[0].upper() }}</div>
       <span class="label">{{ session.username }}</span>
+      {% if account_role %}<span class="role-badge">{{ account_role }}</span>{% endif %}
     </div>
-    <a href="/logout" class="btn btn-ghost">Sign out</a>
+    <form class="logout-form" action="{{ url_for('logout') }}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-ghost">Sign out</button>
+    </form>
   </div>
 </nav>
 {% endif %}
@@ -517,7 +622,7 @@
 
 <div class="preview-backdrop" id="preview-backdrop">
   <div class="preview-bar">
-    <button class="btn btn-ghost btn-icon" onclick="closePreview()" title="Close (Esc)">
+    <button class="btn btn-ghost btn-icon" data-close-preview title="Close (Esc)">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="1" y1="1" x2="13" y2="13"/>
         <line x1="13" y1="1" x2="1" y2="13"/>
@@ -547,9 +652,28 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   function openModal(id) { document.getElementById(id).classList.add('open'); }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function encodedPath(path) {
+    return String(path).split('/').map(encodeURIComponent).join('/');
+  }
+
+  document.addEventListener('click', event => {
+    const opener = event.target.closest('[data-open-modal]');
+    if (opener) openModal(opener.dataset.openModal);
+    const closer = event.target.closest('[data-close-modal]');
+    if (closer) closeModal(closer.dataset.closeModal);
+    if (event.target.closest('[data-close-preview]')) closePreview();
+    const uploadTrigger = event.target.closest('[data-trigger-upload]');
+    if (uploadTrigger) document.getElementById('upload-input')?.click();
+    const preview = event.target.closest('[data-preview-path]');
+    if (preview) {
+      event.preventDefault();
+      openPreview(preview.dataset.previewPath, preview.dataset.previewName || '');
+    }
+  });
 
   document.querySelectorAll('.modal-backdrop').forEach(m => {
     m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
@@ -598,8 +722,9 @@
           <div class="preview-no-support">
             <div class="big-icon">📎</div>
             <p>Binary file — no preview available</p>
-            <a href="/download/${path}" class="btn btn-primary">Download file</a>
+            <a class="btn btn-primary" data-binary-download>Download file</a>
           </div>`;
+        body.querySelector('[data-binary-download]').href = '/download/' + encodedPath(path);
       } else {
         const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
         const pre = document.createElement('pre');
@@ -614,17 +739,18 @@
 
   async function openPreview(path, name) {
     const ext = getExt(name);
-    const url = '/view/' + path;
+    const safePath = encodedPath(path);
+    const url = '/view/' + safePath;
     const body = document.getElementById('preview-body');
     const bd   = document.getElementById('preview-backdrop');
 
     document.getElementById('preview-filename').textContent = name;
-    document.getElementById('preview-download').href = '/download/' + path;
+    document.getElementById('preview-download').href = '/download/' + safePath;
     body.innerHTML = '';
     bd.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    if (['jpg','jpeg','png','gif','webp','svg','bmp','avif','ico'].includes(ext)) {
+    if (['jpg','jpeg','png','gif','webp','bmp','avif','ico'].includes(ext)) {
       const img = document.createElement('img');
       img.src = url;
       body.appendChild(img);
@@ -649,6 +775,7 @@
     } else if (ext === 'pdf') {
       const iframe = document.createElement('iframe');
       iframe.src = url;
+      iframe.setAttribute('sandbox', '');
       iframe.style.cssText = 'width:min(860px,100%);height:min(90vh,100%);border-radius:8px;background:#fff';
       body.appendChild(iframe);
 
@@ -657,8 +784,9 @@
         <div class="preview-no-support">
           <div class="big-icon">📎</div>
           <p>No preview available for .${ext} files</p>
-          <a href="/download/${path}" class="btn btn-primary">Download file</a>
+          <a class="btn btn-primary" data-binary-download>Download file</a>
         </div>`;
+      body.querySelector('[data-binary-download]').href = '/download/' + safePath;
 
     } else {
       await tryTextPreview(url, path, body);

@@ -90,15 +90,15 @@
     <div class="result-info">
       <div class="result-name">
         {% if r.is_dir %}
-          <a href="/browse/{{ r.path }}">{{ r.name }}</a>
+          <a href="{{ url_for('browse', subpath=r.path) }}">{{ r.name }}</a>
         {% else %}
-          <a href="#" onclick="openPreview('{{ r.path | e }}', '{{ r.name | e }}'); return false;">{{ r.name }}</a>
+          <a href="{{ url_for('view_file', subpath=r.path) }}" data-preview-path="{{ r.path }}" data-preview-name="{{ r.name }}">{{ r.name }}</a>
         {% endif %}
       </div>
       <div class="result-path">{{ r.path }}</div>
     </div>
     {% if not r.is_dir %}
-    <a href="/download/{{ r.path }}" class="btn btn-ghost btn-icon" title="Download">
+    <a href="{{ url_for('download_file', subpath=r.path) }}" class="btn btn-ghost btn-icon" title="Download">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
         <line x1="6.5" y1="1" x2="6.5" y2="9"/>
         <polyline points="3,6 6.5,9.5 10,6"/>
