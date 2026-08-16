@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -u
 
+# ==================== CONFIGURATION ====================
+TUNNEL_ADDR="redstonemaster109-fileserver"
+PORT="5000"
+# =======================================================
+
 SERVER_PID=""
 TUNNEL_PID=""
 USE_TUNNEL=false
@@ -45,8 +50,8 @@ run_tunnel() {
     local child_pid=""
     trap '[[ -n "$child_pid" ]] && kill "$child_pid" 2>/dev/null || true; exit 0' SIGINT SIGTERM
     while true; do
-        echo "[$(date +%T)] Opening LocalTunnel..."
-        lt --port 5000 --subdomain redstonemaster01-files-drive &
+        echo "[$(date +%T)] Opening Secure Serveo Tunnel (https://${TUNNEL_ADDR}.serveo.net)..."
+        ssh -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes -R "${TUNNEL_ADDR}:80:localhost:${PORT}" serveo.net &
         child_pid=$!
         wait "$child_pid" || true
         child_pid=""
@@ -61,9 +66,9 @@ SERVER_PID=$!
 if $USE_TUNNEL; then
     run_tunnel &
     TUNNEL_PID=$!
-    echo "LAN and tunnel access enabled."
+    echo "LAN and secure tunnel access enabled."
 else
-    echo "LAN access enabled. Start with --tunnel to also open LocalTunnel."
+    echo "LAN access enabled. Start with --tunnel to also open Serveo Tunnel."
 fi
 
 wait "$SERVER_PID"
