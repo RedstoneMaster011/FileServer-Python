@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
 set -u
 
-# ==================== CONFIGURATION ====================
-TUNNEL_ADDR="redstonemaster109-fileserver"
-PORT="5000"
-# =======================================================
-
 SERVER_PID=""
-TUNNEL_PID=""
+FUNNEL_PID=""
 USE_TUNNEL=false
 CLEANED=false
 
@@ -24,51 +19,53 @@ cleanup() {
     echo ""
     echo "[$(date +%T)] Shutting down..."
     [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null || true
-    [[ -n "$TUNNEL_PID" ]] && kill "$TUNNEL_PID" 2>/dev/null || true
+    [[ -n "$FUNNEL_PID" ]] && kill "$FUNNEL_PID" 2>/dev/null || true
     [[ -n "$SERVER_PID" ]] && wait "$SERVER_PID" 2>/dev/null || true
-    [[ -n "$TUNNEL_PID" ]] && wait "$TUNNEL_PID" 2>/dev/null || true
+    [[ -n "$FUNNEL_PID" ]] && wait "$FUNNEL_PID" 2>/dev/null || true
     echo "[$(date +%T)] Done."
 }
 
 trap cleanup EXIT SIGINT SIGTERM
 
 run_server() {
-    local child_pid=""
-    trap '[[ -n "$child_pid" ]] && kill "$child_pid" 2>/dev/null || true; exit 0' SIGINT SIGTERM
     while true; do
-        echo "[$(date +%T)] Starting Python File Server..."
+        echo "[$(date +%T)] Starting Python File Server on Port 5000..."
         ./.venv/bin/python3 main.py &
-        child_pid=$!
-        wait "$child_pid" || true
-        child_pid=""
-        echo "[$(date +%T)] Server stopped. Restarting in 2s..."
+        SERVER_PID=$!
+        wait "$SERVER_PID" || true
+        SERVER_PID=""
+        echo "[$(date +%T)] Server stopped unexpectedly. Restarting in 2s..."
         sleep 2
     done
 }
 
-run_tunnel() {
-    local child_pid=""
-    trap '[[ -n "$child_pid" ]] && kill "$child_pid" 2>/dev/null || true; exit 0' SIGINT SIGTERM
+run_funnel() {
+    # Give the python server 2 seconds to bind to port 5000 first
+    sleep 2
     while true; do
-        echo "[$(date +%T)] Opening Secure Serveo Tunnel (https://${TUNNEL_ADDR}.serveo.net)..."
-        ssh -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes -R "${TUNNEL_ADDR}:80:localhost:${PORT}" serveo.net &
-        child_pid=$!
-        wait "$child_pid" || true
-        child_pid=""
-        echo "[$(date +%T)] Tunnel dropped. Restarting in 5s..."
+        echo "[$(date +%T)] Ensuring Public Tailscale Funnel is Active..."
+
+        # Reset the serve config and activate the funnel
+        sudo tailscale serve http 5000 >/dev/null 2>&1
+        sudo tailscale funnel ON &
+        FUNNEL_PID=$!
+
+        wait "$FUNNEL_PID" || true
+        FUNNEL_PID=""
+        echo "[$(date +%T)] Funnel dropped. Reconnecting in 5s..."
         sleep 5
     done
 }
 
+# Fire up the core web application logic
 run_server &
-SERVER_PID=$!
 
 if $USE_TUNNEL; then
-    run_tunnel &
-    TUNNEL_PID=$!
-    echo "LAN and secure tunnel access enabled."
+    run_funnel &
+    echo "LAN and secure Tailscale Funnel access enabled."
 else
-    echo "LAN access enabled. Start with --tunnel to also open Serveo Tunnel."
+    echo "LAN access enabled. Start with --tunnel to also open Tailscale Funnel."
 fi
 
-wait "$SERVER_PID"
+# Keep the main process script alive
+wait
