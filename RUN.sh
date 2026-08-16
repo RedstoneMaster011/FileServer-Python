@@ -39,20 +39,25 @@ run_server() {
     done
 }
 
-run_funnel() {
-    # Give the python server 2 seconds to bind to port 5000 first
-    sleep 2
-    while true; do
-        echo "[$(date +%T)] Ensuring Public Tailscale Funnel is Active..."
+run_tunnel() {
+    # Initial 5-second warm up delay for the Python socket to bind
+    echo "[$(date +%T)] Waiting 5 seconds for server to initialize..."
+    sleep 5
 
-        # Reset the serve config and activate the funnel
-        sudo tailscale serve http 5000 >/dev/null 2>&1
-        sudo tailscale funnel ON &
+    while true; do
+        echo "[$(date +%T)] Launching Tailscale Funnel on Port 5000..."
+
+        # Reset the serve state and launch the funnel
+        tailscale serve http 5000 >/dev/null 2>&1
+        tailscale funnel 5000 &
         FUNNEL_PID=$!
 
+        # Wait for this specific background instance to run or exit
         wait "$FUNNEL_PID" || true
         FUNNEL_PID=""
-        echo "[$(date +%T)] Funnel dropped. Reconnecting in 5s..."
+
+        # Safely self-heals by looping and attempting a second run after 5s
+        echo "[$(date +%T)] Funnel dropped or failed. Re-launching in 5s..."
         sleep 5
     done
 }
@@ -61,7 +66,7 @@ run_funnel() {
 run_server &
 
 if $USE_TUNNEL; then
-    run_funnel &
+    run_tunnel &
     echo "LAN and secure Tailscale Funnel access enabled."
 else
     echo "LAN access enabled. Start with --tunnel to also open Tailscale Funnel."
